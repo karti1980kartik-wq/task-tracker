@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Task Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root{
+  --bg:#0f172a; --card:#020617; --cell:#1e293b;
+  --text:#e5e7eb; --green:#22c55e; --muted:#64748b;
+}
+body{margin:0;font-family:Arial;background:var(--bg);color:var(--text)}
+header{padding:10px;background:var(--card);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0}
+button{cursor:pointer}
+.container{padding:12px}
+
+.grid{display:grid;grid-template-columns:160px repeat(var(--days),40px);gap:6px;overflow-x:auto}
+.day,.cell,.task{height:40px;display:flex;align-items:center;justify-content:center;font-size:12px;border:1px solid #334155}
+.day{background:#020617;color:var(--muted);flex-direction:column;font-size:10px}
+.task{background:#020617;justify-content:space-between;padding:0 6px}
+.cell{background:var(--cell);cursor:pointer;position:relative}
+.cell.done{background:var(--green)}
+.cell.locked{opacity:0.45;cursor:not-allowed}
+.today{outline:2px solid orange}
+
+.tooltip{
+  position:absolute;bottom:45px;left:50%;
+  transform:translateX(-50%);
+  background:#020617;padding:4px 6px;
+  font-size:11px;border-radius:6px;display:none;
+}
+.cell:hover .tooltip{display:block}
+
+.stats{margin-top:14px;display:flex;gap:12px;flex-wrap:wrap}
+.card{background:var(--card);padding:10px;border-radius:8px;min-width:200px}
+
+.heatmap{display:grid;grid-template-columns:repeat(30,10px);gap:4px;margin-top:8px}
+.heat{width:10px;height:10px;background:#1e293b;border-radius:2px}
+.l1{background:#166534}
+.l2{background:#22c55e}
+.l3{background:#4ade80}
+
+.barGraph{margin-top:8px}
+.barRow{margin-bottom:6px;font-size:11px}
+.barBg{
+  background:#1e293b;
+  border-radius:6px;
+  overflow:hidden;
+  height:14px;
+}
+.barFill{
+  height:100%;
+  background:#22c55e;
+  width:0%;
+  transition:0.4s;
+}
+
+input,select{background:#020617;color:white;border:1px solid #334155;padding:4px}
+
+/* ORIGINAL MOBILE RULE */
+@media(max-width:600px){
+  .grid{grid-template-columns:140px repeat(var(--days),36px)}
+}
+
+/* =================================================
+   ✅ MOBILE FRIENDLY ADD ONLY (NO CHANGE)
+   ================================================= */
+@media(max-width:768px){
+  .stats{
+    flex-direction:column;
+  }
+  .card{
+    width:100%;
+    min-width:unset;
+  }
+  header button{
+    padding:6px 10px;
+    font-size:16px;
+  }
+  input,select,button{
+    font-size:14px;
+    padding:8px;
+  }
+  .grid{
+    -webkit-overflow-scrolling:touch;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <b id="monthTitle"></b>
+  <div>
+    <button onclick="changeMonth(-1)">◀</button>
+    <button onclick="changeMonth(1)">▶</button>
+  </div>
+</header>
+
+<div class="container">
+
+<div id="loginBox">
+  <input id="username" placeholder="Username">
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="app" style="display:none">
+
+<div style="margin-bottom:10px">
+  <input id="taskInput" placeholder="New task">
+  <button onclick="addTask()">Add</button>
+</div>
+
+<div id="tracker"></div>
+
+<div class="stats">
+
+  <div class="card"><b>Monthly Progress</b><div id="progress">0%</div></div>
+  <div class="card"><b>Streaks</b><div id="streaks"></div></div>
+  <div class="card"><b>Best Streak</b><div id="bestStreak"></div></div>
+  <div class="card"><b>Task Ranking</b><div id="ranking"></div></div>
+  <div class="card"><b>Weekly Summary</b><div id="weeklyPercent"></div></div>
+
+  <div class="card"><b>Heatmap (Overall)</b><div id="heatmap" class="heatmap"></div></div>
+
+  <div class="card">
+    <b>Task Heatmap</b>
+    <select id="taskSelect" onchange="renderHeatmap()"></select>
+    <div id="taskHeatmap" class="heatmap"></div>
+  </div>
+
+  <div class="card"><b>Rewards 🏆</b><div id="rewards"></div></div>
+
+  <div class="card">
+    <b>Progress Bar Graph</b>
+    <div id="barGraph" class="barGraph"></div>
+  </div>
+
+  <div class="card">
+    <b>Weekly Auto Report 📅</b>
+    <div id="weeklyReport"></div>
+  </div>
+
+  <div class="card">
+    <b>Monthly Auto Report 📊</b>
+    <div id="monthlyReport"></div>
+  </div>
+
+  <div class="card">
+    <b>Study Hours (Optional)</b><br><br>
+    <input id="hoursInput" type="number" step="0.5" placeholder="Hours today">
+    <button onclick="addHours()">Add</button>
+    <div style="margin-top:6px">
+      Today: <span id="todayHours">0</span> h<br>
+      Total: <span id="totalHours">0</span> h
+    </div>
+  </div>
+
+  <div class="card">
+    <b>Pandora Timer ⏳ (1 Hour)</b><br><br>
+    <div id="pandoraTime" style="font-size:20px">01:00:00</div><br>
+    <button onclick="startPandora()">Start</button>
+    <button onclick="pausePandora()">Pause</button>
+    <button onclick="resetPandora()">Reset</button>
+  </div>
+
+</div>
+</div>
+</div>
+
+<script>
+/* ================= ORIGINAL JS (UNCHANGED) ================= */
+let user=null,monthOffset=0;
+let tasks=[],store={},hours={today:0,total:0,date:""};
+
+function login(){
+  user=username.value.trim();
+  if(!user) return;
+  localStorage.setItem("activeUser",user);
+  init();
+}
+
+function init(){
+  user=localStorage.getItem("activeUser");
+  if(!user) return;
+  loginBox.style.display="none";
+  app.style.display="block";
+  loadData(); render();
+}
+
+function loadData(){
+  tasks=JSON.parse(localStorage.getItem(user+"_tasks"))||["Study","Exercise","Reading"];
+  store=JSON.parse(localStorage.getItem(user+"_store"))||{};
+  hours=JSON.parse(localStorage.getItem(user+"_hours"))||
+    {today:0,total:0,date:new Date().toDateString()};
+}
+
+function save(){
+  localStorage.setItem(user+"_tasks",JSON.stringify(tasks));
+  localStorage.setItem(user+"_store",JSON.stringify(store));
+  localStorage.setItem(user+"_hours",JSON.stringify(hours));
+}
+
+function getMonthInfo(){
+  let d=new Date(); d.setMonth(d.getMonth()+monthOffset);
+  return {
+    year:d.getFullYear(),
+    month:d.getMonth(),
+    days:new Date(d.getFullYear(),d.getMonth()+1,0).getDate()
+  };
+}
+
+function dateKey(y,m,d){
+  return `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+}
+
+function ensureMonth(y,m,days){
+  for(let i=0;i<tasks.length;i++){
+    for(let d=1;d<=days;d++){
+      let k=dateKey(y,m,d);
+      store[k]=store[k]||{};
+      store[k][i]=store[k][i]||false;
+    }
+  }
+}
+
+function render(){
+  let {year,month,days}=getMonthInfo();
+  ensureMonth(year,month,days);
+
+  monthTitle.textContent =
+    new Date(year,month).toLocaleString("en",{month:"long",year:"numeric"});
+
+  document.documentElement.style.setProperty("--days",days);
+  tracker.innerHTML="";
+  let g=document.createElement("div"); g.className="grid";
+
+  g.appendChild(make("Tasks","task day"));
+
+  let today=new Date().getDate();
+  let now=new Date();
+
+  for(let d=1;d<=days;d++){
+    let date=new Date(year,month,d);
+    let el=document.createElement("div");
+    el.className="day";
+    el.innerHTML=`${d}<br>${date.toLocaleString("en",{weekday:"short"})}`;
+    if(monthOffset===0 && d===today) el.classList.add("today");
+    g.appendChild(el);
+  }
+
+  tasks.forEach((t,i)=>{
+    let tc=document.createElement("div");
+    tc.className="task";
+    tc.innerHTML=`${t} <span onclick="removeTask(${i})">❌</span>`;
+    g.appendChild(tc);
+
+    for(let d=1;d<=days;d++){
+      let k=dateKey(year,month,d);
+      let c=document.createElement("div");
+      c.className="cell";
+
+      let cellDate=new Date(year,month,d);
+      let locked = cellDate.toDateString() !== now.toDateString();
+
+      if(store[k][i]) c.classList.add("done");
+      if(locked) c.classList.add("locked");
+
+      let tip=document.createElement("div");
+      tip.className="tooltip";
+      tip.textContent = locked ? "🔒 Locked day" : `${t} • Today`;
+      c.appendChild(tip);
+
+      if(!locked){
+        c.onclick=()=>{
+          store[k][i]=!store[k][i];
+          save(); render();
+        };
+      }
+
+      g.appendChild(c);
+    }
+  });
+
+  tracker.appendChild(g);
+  populateTaskSelect();
+  renderStats();
+}
+
+function renderStats(){
+  let {year,month,days}=getMonthInfo();
+  let total=tasks.length*days, done=0;
+
+  for(let d=1;d<=days;d++){
+    let k=dateKey(year,month,d);
+    tasks.forEach((_,i)=>{ if(store[k]?.[i]) done++; });
+  }
+
+  progress.textContent=Math.round(done/total*100)+"%";
+
+  let bestOverall=0,rank=[],streakHTML="";
+
+ tasks.forEach((t,i)=>{
+  let cur=0;
+  let today = (monthOffset===0) ? new Date().getDate() : days;
+
+  for(let d=today; d>=1; d--){
+    let k=dateKey(year,month,d);
+    if(store[k]?.[i]) cur++;
+    else break;
+  }
+
+  streakHTML+=`${t}: ⚡ ${cur}<br>`;
+  bestOverall=Math.max(bestOverall,cur);
+  rank.push({t,score:Object.values(store).filter(v=>v[i]).length});
+});
+
+
+  streaks.innerHTML=streakHTML;
+  // ---- ADD: Subject-wise BEST streaks ----
+let bestHTML = bestOverall + " days<br>";
+
+tasks.forEach((t,i)=>{
+  let cur=0,best=0;
+  for(let d=1; d<=days; d++){
+    let k=dateKey(year,month,d);
+    store[k]?.[i] ? (cur++,best=Math.max(best,cur)) : cur=0;
+  }
+  bestHTML += `${t}: 🔥 ${best}<br>`;
+});
+
+bestStreak.innerHTML = bestHTML;
+
+
+  rank.sort((a,b)=>b.score-a.score);
+  ranking.innerHTML=rank.map(r=>`${r.t}: ${r.score}`).join("<br>");
+
+  weeklyPercent.textContent=Math.round(done/(tasks.length*7)*100)+"%";
+
+  renderHeatmap();
+  renderRewards();
+  renderHours();
+  renderBarGraph();
+}
+
+function renderBarGraph(){
+  let {year,month,days}=getMonthInfo();
+  let html="";
+
+  tasks.forEach((t,i)=>{
+    let done=0;
+    for(let d=1;d<=days;d++){
+      let k=dateKey(year,month,d);
+      if(store[k]?.[i]) done++;
+    }
+    let percent=Math.round(done/days*100);
+
+    html+=`
+      <div class="barRow">
+        ${t} – ${percent}%
+        <div class="barBg">
+          <div class="barFill" style="width:${percent}%"></div>
+        </div>
+      </div>
+    `;
+  });
+
+  barGraph.innerHTML=html;
+}
+
+function renderHeatmap(){
+  heatmap.innerHTML=""; taskHeatmap.innerHTML="";
+  let counts={};
+
+  Object.keys(store).forEach(d=>{
+    counts[d]=(counts[d]||0)+Object.values(store[d]).filter(Boolean).length;
+  });
+
+  Object.keys(counts).slice(-90).forEach(k=>{
+    let v=counts[k];
+    let lvl=v>5?3:v>2?2:v>0?1:0;
+    let d=document.createElement("div");
+    d.className="heat "+(lvl?("l"+lvl):"");
+    heatmap.appendChild(d);
+  });
+
+  let ti=taskSelect.value||0;
+  Object.keys(store).slice(-90).forEach(k=>{
+    let d=document.createElement("div");
+    d.className="heat "+(store[k]?.[ti]?"l3":"");
+    taskHeatmap.appendChild(d);
+  });
+}
+
+function renderRewards(){
+  let html="";
+  tasks.forEach((t,i)=>{
+    let best=0,cur=0;
+    Object.keys(store).forEach(k=>{
+      store[k][i] ? (cur++,best=Math.max(best,cur)) : cur=0;
+    });
+    let r=best>=21?"🥇 Gold":best>=14?"🥈 Silver":best>=7?"🥉 Bronze":"❌";
+    html+=`${t}: ${r}<br>`;
+  });
+  rewards.innerHTML=html;
+}
+
+function populateTaskSelect(){
+  taskSelect.innerHTML=tasks.map((t,i)=>`<option value="${i}">${t}</option>`).join("");
+}
+
+function addTask(){
+  let v=taskInput.value.trim(); if(!v) return;
+  tasks.push(v); save(); render();
+}
+
+function removeTask(i){
+  if(!confirm("Delete task?")) return;
+  tasks.splice(i,1);
+  Object.values(store).forEach(d=>delete d[i]);
+  save(); render();
+}
+
+function addHours(){
+  let h=parseFloat(hoursInput.value); if(!h) return;
+  let today=new Date().toDateString();
+  if(hours.date!==today){hours.today=0;hours.date=today;}
+  hours.today+=h; hours.total+=h;
+  save(); renderHours();
+}
+
+function renderHours(){
+  let today=new Date().toDateString();
+  if(hours.date!==today){hours.today=0;hours.date=today;save();}
+  todayHours.textContent=hours.today;
+  totalHours.textContent=hours.total;
+}
+
+function make(t,c){let d=document.createElement("div");d.className=c;d.textContent=t;return d}
+function changeMonth(n){monthOffset+=n;render()}
+
+init();
+
+/* ===== Pandora Timer (UNCHANGED) ===== */
+let pandoraSeconds = 3600;
+let pandoraInterval = null;
+
+function updatePandoraUI(){
+  let h = String(Math.floor(pandoraSeconds / 3600)).padStart(2,"0");
+  let m = String(Math.floor((pandoraSeconds % 3600) / 60)).padStart(2,"0");
+  let s = String(pandoraSeconds % 60).padStart(2,"0");
+  pandoraTime.textContent = `${h}:${m}:${s}`;
+}
+
+function startPandora(){
+  if(pandoraInterval) return;
+  pandoraInterval = setInterval(()=>{
+    if(pandoraSeconds <= 0){
+      clearInterval(pandoraInterval);
+      pandoraInterval = null;
+      hoursInput.value = 1;
+      addHours();
+      hoursInput.value = "";
+      alert("⏰ 1 Hour Completed & Added to Study Hours!");
+      return;
+    }
+    pandoraSeconds--;
+    updatePandoraUI();
+  },1000);
+}
+
+function pausePandora(){
+  clearInterval(pandoraInterval);
+  pandoraInterval = null;
+}
+
+function resetPandora(){
+  pausePandora();
+  pandoraSeconds = 3600;
+  updatePandoraUI();
+}
+
+updatePandoraUI();
+
+/* ===== ADD-ON: WEEKLY & MONTHLY REPORT ===== */
+function generateReports(){
+  let {year,month,days}=getMonthInfo();
+  let now=new Date();
+  let weeklyDone=0, monthlyDone=0;
+
+  for(let d=1;d<=days;d++){
+    let k=dateKey(year,month,d);
+    tasks.forEach((_,i)=>{
+      if(store[k]?.[i]){
+        monthlyDone++;
+        let dt=new Date(year,month,d);
+        if((now-dt)/(1000*60*60*24)<=7) weeklyDone++;
+      }
+    });
+  }
+
+  weeklyReport.innerHTML=
+    `Done: ${weeklyDone}<br>Completion: ${Math.round(weeklyDone/(tasks.length*7)*100)}%`;
+
+  monthlyReport.innerHTML=
+    `Done: ${monthlyDone}<br>Completion: ${Math.round(monthlyDone/(tasks.length*days)*100)}%`;
+}
+
+/* hook into renderStats without touching original */
+const __rs = renderStats;
+renderStats=function(){
+  __rs();
+  generateReports();
+};
+
+</script>
+
+</body>
+</html>

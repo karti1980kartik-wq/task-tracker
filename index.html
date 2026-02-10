@@ -462,21 +462,17 @@ function changeMonth(n){monthOffset+=n;render()}
 
 init();
 
-/* ===== Pandora Timer (FIXED) ===== */
+/* ===== Pandora Timer (FINAL WORKING) ===== */
 
 let pandoraSeconds = parseInt(localStorage.getItem("pandoraSeconds"));
-
 if (isNaN(pandoraSeconds) || pandoraSeconds <= 0) {
   pandoraSeconds = 3600;
 }
 
 let pandoraInterval = null;
-updatePandoraUI();
-
-let pandoraInterval = null;
-  updatePandoraUI();
 
 function updatePandoraUI(){
+  if(!pandoraTime) return;
   let h = String(Math.floor(pandoraSeconds / 3600)).padStart(2,"0");
   let m = String(Math.floor((pandoraSeconds % 3600) / 60)).padStart(2,"0");
   let s = String(pandoraSeconds % 60).padStart(2,"0");
@@ -513,6 +509,10 @@ function resetPandora(){
   localStorage.setItem("pandoraSeconds", pandoraSeconds);
   updatePandoraUI();
 }
+
+/* call AFTER DOM ready */
+updatePandoraUI();
+
 
 /* ===== ADD-ON: WEEKLY & MONTHLY REPORT ===== */
 function generateReports(){
@@ -573,6 +573,7 @@ No signup required. 100% free and easy to use.
 
 </body>
 </html>
+
 
 
 

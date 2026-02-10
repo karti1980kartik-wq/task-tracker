@@ -206,9 +206,10 @@ function init(){
   if(!user) return;
   loginBox.style.display="none";
   app.style.display="block";
-  loadData(); render();
+  loadData();
+  render();
+  bindPandoraElements(); //
 }
-
 function loadData(){
   tasks=JSON.parse(localStorage.getItem(user+"_tasks"))||["Study","Exercise","Reading"];
   store=JSON.parse(localStorage.getItem(user+"_store"))||{};
@@ -462,7 +463,7 @@ function changeMonth(n){monthOffset+=n;render()}
 
 init();
 
-/* ===== Pandora Timer (FINAL WORKING) ===== */
+/* ===== Pandora Timer (LOGIN SAFE) ===== */
 
 let pandoraSeconds = parseInt(localStorage.getItem("pandoraSeconds"));
 if (isNaN(pandoraSeconds) || pandoraSeconds <= 0) {
@@ -470,26 +471,33 @@ if (isNaN(pandoraSeconds) || pandoraSeconds <= 0) {
 }
 
 let pandoraInterval = null;
+let pandoraTimeEl = null;
+let hoursInputEl = null;
+
+function bindPandoraElements(){
+  pandoraTimeEl = document.getElementById("pandoraTime");
+  hoursInputEl = document.getElementById("hoursInput");
+  updatePandoraUI();
+}
 
 function updatePandoraUI(){
-  if(!pandoraTime) return;
+  if(!pandoraTimeEl) return;
   let h = String(Math.floor(pandoraSeconds / 3600)).padStart(2,"0");
   let m = String(Math.floor((pandoraSeconds % 3600) / 60)).padStart(2,"0");
   let s = String(pandoraSeconds % 60).padStart(2,"0");
-  pandoraTime.textContent = `${h}:${m}:${s}`;
+  pandoraTimeEl.textContent = `${h}:${m}:${s}`;
 }
 
 function startPandora(){
   if(pandoraInterval) return;
   pandoraInterval = setInterval(()=>{
     if(pandoraSeconds <= 0){
-      clearInterval(pandoraInterval);
-      pandoraInterval = null;
+      pausePandora();
       localStorage.setItem("pandoraSeconds", 0);
-      hoursInput.value = 1;
+      hoursInputEl.value = 1;
       addHours();
-      hoursInput.value = "";
-      alert("⏰ 1 Hour Completed & Added to Study Hours!");
+      hoursInputEl.value = "";
+      alert("⏰ 1 Hour Completed & Added!");
       return;
     }
     pandoraSeconds--;
@@ -509,10 +517,6 @@ function resetPandora(){
   localStorage.setItem("pandoraSeconds", pandoraSeconds);
   updatePandoraUI();
 }
-
-/* call AFTER DOM ready */
-updatePandoraUI();
-
 
 /* ===== ADD-ON: WEEKLY & MONTHLY REPORT ===== */
 function generateReports(){
@@ -573,6 +577,7 @@ No signup required. 100% free and easy to use.
 
 </body>
 </html>
+
 
 
 

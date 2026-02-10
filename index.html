@@ -5,7 +5,7 @@
 
 <meta name="description" content="Free online study habit tracker for NDA, SSC, UPSC and competitive exam aspirants. Track daily tasks, build streaks, measure productivity and improve consistency.">
 
-<meta name="keywords" content="study tracker, habit tracker for students, NDA study planner, SSC study tracker, UPSC study routine, free task tracker online">
+<meta name="keywords" content="study tracker, habit tracker for students, NDA study planner, SSC study tracker, UPSC study routine, DAILY PLANNER, free task tracker online">
 
 <meta name="author" content="Rishabh">
 
@@ -463,7 +463,10 @@ function changeMonth(n){monthOffset+=n;render()}
 init();
 
 /* ===== Pandora Timer (UNCHANGED) ===== */
-let pandoraSeconds = 3600;
+let pandoraSeconds = localStorage.getItem("pandoraSeconds")
+  ? parseInt(localStorage.getItem("pandoraSeconds"))
+  : 3600;
+
 let pandoraInterval = null;
 
 function updatePandoraUI(){
@@ -479,6 +482,7 @@ function startPandora(){
     if(pandoraSeconds <= 0){
       clearInterval(pandoraInterval);
       pandoraInterval = null;
+      localStorage.removeItem("pandoraSeconds");
       hoursInput.value = 1;
       addHours();
       hoursInput.value = "";
@@ -486,6 +490,7 @@ function startPandora(){
       return;
     }
     pandoraSeconds--;
+    localStorage.setItem("pandoraSeconds", pandoraSeconds);
     updatePandoraUI();
   },1000);
 }
@@ -496,11 +501,12 @@ function pausePandora(){
 }
 
 function resetPandora(){
+  function resetPandora(){
   pausePandora();
   pandoraSeconds = 3600;
+  localStorage.setItem("pandoraSeconds", pandoraSeconds);
   updatePandoraUI();
 }
-
 updatePandoraUI();
 
 /* ===== ADD-ON: WEEKLY & MONTHLY REPORT ===== */
@@ -562,6 +568,7 @@ No signup required. 100% free and easy to use.
 
 </body>
 </html>
+
 
 
 

@@ -364,6 +364,7 @@ bestStreak.innerHTML = bestHTML;
   renderRewards();
   renderHours();
   renderBarGraph();
+  generateReports();
 }
 
 function renderBarGraph(){
@@ -478,8 +479,8 @@ function bindPandoraElements(){
   pandoraTimeEl = document.getElementById("pandoraTime");
   hoursInputEl = document.getElementById("hoursInput");
   updatePandoraUI();
-  startPandora();
 }
+
 
 function updatePandoraUI(){
   if(!pandoraTimeEl) return;
@@ -544,12 +545,7 @@ function generateReports(){
     `Done: ${monthlyDone}<br>Completion: ${Math.round(monthlyDone/(tasks.length*days)*100)}%`;
 }
 
-/* hook into renderStats without touching original */
-const __rs = renderStats;
-renderStats=function(){
-  __rs();
-  generateReports();
-};
+
 
 </script>
   <section style="padding:20px; margin-top:40px;">
@@ -579,6 +575,7 @@ No signup required. 100% free and easy to use.
 
 </body>
 </html>
+
 
 
 

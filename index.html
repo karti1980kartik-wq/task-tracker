@@ -462,10 +462,16 @@ function changeMonth(n){monthOffset+=n;render()}
 
 init();
 
-/* ===== Pandora Timer (UNCHANGED) ===== */
-let pandoraSeconds = localStorage.getItem("pandoraSeconds")
-  ? parseInt(localStorage.getItem("pandoraSeconds"))
-  : 3600;
+/* ===== Pandora Timer (FIXED) ===== */
+
+let pandoraSeconds = parseInt(localStorage.getItem("pandoraSeconds"));
+
+if (isNaN(pandoraSeconds) || pandoraSeconds <= 0) {
+  pandoraSeconds = 3600;
+}
+
+let pandoraInterval = null;
+updatePandoraUI();
 
 let pandoraInterval = null;
   updatePandoraUI();
@@ -483,7 +489,7 @@ function startPandora(){
     if(pandoraSeconds <= 0){
       clearInterval(pandoraInterval);
       pandoraInterval = null;
-      localStorage.removeItem("pandoraSeconds");
+      localStorage.setItem("pandoraSeconds", 0);
       hoursInput.value = 1;
       addHours();
       hoursInput.value = "";
@@ -567,6 +573,7 @@ No signup required. 100% free and easy to use.
 
 </body>
 </html>
+
 
 
 

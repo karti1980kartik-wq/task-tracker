@@ -208,7 +208,8 @@ function init(){
   app.style.display="block";
   loadData();
   render();
-  bindPandoraElements(); //
+  bindPandoraElements();
+   generateReports();
 }
 function loadData(){
   tasks=JSON.parse(localStorage.getItem(user+"_tasks"))||["Study","Exercise","Reading"];
@@ -477,6 +478,7 @@ function bindPandoraElements(){
   pandoraTimeEl = document.getElementById("pandoraTime");
   hoursInputEl = document.getElementById("hoursInput");
   updatePandoraUI();
+  startPandora();
 }
 
 function updatePandoraUI(){
@@ -577,6 +579,7 @@ No signup required. 100% free and easy to use.
 
 </body>
 </html>
+
 
 
 

@@ -209,7 +209,6 @@ function init(){
   loadData();
   render();
   bindPandoraElements();
-   generateReports();
 }
 function loadData(){
   tasks=JSON.parse(localStorage.getItem(user+"_tasks"))||["Study","Exercise","Reading"];
@@ -463,7 +462,6 @@ function renderHours(){
 function make(t,c){let d=document.createElement("div");d.className=c;d.textContent=t;return d}
 function changeMonth(n){monthOffset+=n;render()}
 
-init();
 /* ===== Pandora Timer (LOGIN SAFE) ===== */
 
 let pandoraSeconds = parseInt(localStorage.getItem("pandoraSeconds"));
@@ -545,6 +543,7 @@ function generateReports(){
     `Done: ${monthlyDone}<br>Completion: ${Math.round(monthlyDone/(tasks.length*days)*100)}%`;
 }
 
+init();
 
 
 </script>
@@ -575,6 +574,7 @@ No signup required. 100% free and easy to use.
 
 </body>
 </html>
+
 
 
 

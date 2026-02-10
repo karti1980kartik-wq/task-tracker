@@ -462,7 +462,60 @@ function make(t,c){let d=document.createElement("div");d.className=c;d.textConte
 function changeMonth(n){monthOffset+=n;render()}
 
 init();
+/* ===== Pandora Timer (LOGIN SAFE) ===== */
 
+let pandoraSeconds = parseInt(localStorage.getItem("pandoraSeconds"));
+if (isNaN(pandoraSeconds) || pandoraSeconds <= 0) {
+  pandoraSeconds = 3600;
+}
+
+let pandoraInterval = null;
+let pandoraTimeEl = null;
+let hoursInputEl = null;
+
+function bindPandoraElements(){
+  pandoraTimeEl = document.getElementById("pandoraTime");
+  hoursInputEl = document.getElementById("hoursInput");
+  updatePandoraUI();
+}
+
+function updatePandoraUI(){
+  if(!pandoraTimeEl) return;
+  let h = String(Math.floor(pandoraSeconds / 3600)).padStart(2,"0");
+  let m = String(Math.floor((pandoraSeconds % 3600) / 60)).padStart(2,"0");
+  let s = String(pandoraSeconds % 60).padStart(2,"0");
+  pandoraTimeEl.textContent = `${h}:${m}:${s}`;
+}
+
+function startPandora(){
+  if(pandoraInterval) return;
+  pandoraInterval = setInterval(()=>{
+    if(pandoraSeconds <= 0){
+      pausePandora();
+      localStorage.setItem("pandoraSeconds", 0);
+      hoursInputEl.value = 1;
+      addHours();
+      hoursInputEl.value = "";
+      alert("⏰ 1 Hour Completed & Added!");
+      return;
+    }
+    pandoraSeconds--;
+    localStorage.setItem("pandoraSeconds", pandoraSeconds);
+    updatePandoraUI();
+  },1000);
+}
+
+function pausePandora(){
+  clearInterval(pandoraInterval);
+  pandoraInterval = null;
+}
+
+function resetPandora(){
+  pausePandora();
+  pandoraSeconds = 3600;
+  localStorage.setItem("pandoraSeconds", pandoraSeconds);
+  updatePandoraUI();
+}
 
 
 /* ===== ADD-ON: WEEKLY & MONTHLY REPORT ===== */
@@ -524,6 +577,7 @@ No signup required. 100% free and easy to use.
 
 </body>
 </html>
+
 
 
 

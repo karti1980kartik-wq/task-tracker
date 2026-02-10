@@ -135,6 +135,10 @@ input,select{background:#020617;color:white;border:1px solid #334155;padding:4px
 <div id="tracker"></div>
 
 <div class="stats">
+  <div class="card">
+  <b>Daily Study Tip 💡</b>
+  <p id="studyTip"></p>
+</div>
 
   <div class="card"><b>Monthly Progress</b><div id="progress">0%</div></div>
   <div class="card"><b>Streaks</b><div id="streaks"></div></div>
@@ -544,6 +548,42 @@ function generateReports(){
 }
 
 init();
+  
+  <script>
+/* ===== DAILY STUDY TIPS ===== */
+
+const studyTips = [
+  "Roz thoda padho, par bina gap ke 📘",
+  "Revision bina padhe kaam adhoora hota hai 🔁",
+  "Timer laga ke padhna focus badhata hai ⏳",
+  "Difficult topic subah padho 🌅",
+  "Notes short aur clear rakho ✍️",
+  "Har din ek mock question zaroor karo ❓",
+  "Mobile ko padhai ke time door rakho 📵",
+  "Formula daily likhne ki aadat banao ✏️",
+  "Weak topic se bhaago mat 💪",
+  "Consistency talent se zyada powerful hai 🔥",
+  "Sone se pehle revise karo 🧠",
+  "Timer ke saath break bhi zaroori hai ☕",
+  "Galtiyon ka notebook banao 📒",
+  "Aaj ka kaam aaj hi niptao ✅",
+  "Exam clear karna marathon hai, sprint nahi 🏃‍♂️"
+];
+
+function showDailyTip(){
+  const tipBox = document.getElementById("studyTip");
+  if(!tipBox) return;
+
+  const day = new Date().getDate(); // 1–31
+  const index = day % studyTips.length;
+
+  tipBox.textContent = studyTips[index];
+}
+
+// page load hone par tip dikhao
+showDailyTip();
+</script>
+
 
 
 </script>
@@ -596,6 +636,7 @@ No signup required. 100% free and easy to use.
 
 </body>
 </html>
+
 
 
 
